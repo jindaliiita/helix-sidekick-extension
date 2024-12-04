@@ -560,6 +560,9 @@
   "publish": {
     "message": "Publish"
   },
+  "send-to-review": {
+    "message": "Send to review"
+  },
   "publish_date": {
     "message": "Published: "
   },

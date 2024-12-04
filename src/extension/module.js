@@ -1617,6 +1617,66 @@ import sampleRUM from './rum.js';
   }
 
   /**
+   * Adds the publish plugin to the sidekick.
+   * @private
+   * @param {Sidekick} sk The sidekick
+   */
+  function addSendToReview(sk) {
+    sk.add({
+      id: 'send-to-review',
+      condition: (sidekick) => sidekick.isProject() && sk.isContent(),
+      button: {
+        text: i18n(sk, 'send-to-review'),
+        action: async (evt) => {
+          // const { config, location } = sk;
+          // const path = location.pathname;
+          // sk.showWait();
+          // let urls = [path];
+          // // purge dependencies
+          // if (Array.isArray(window.hlx.dependencies)) {
+          //   urls = urls.concat(window.hlx.dependencies);
+          // }
+          // const results = await Promise.all(urls.map((url) => sk.publish(url)));
+          // if (results.every((res) => res && res.ok)) {
+          //   // fetch and redirect to production
+          //   const redirectHost = config.host || config.outerHost;
+          //   const prodURL = `https://${redirectHost}${path}`;
+          //   console.log(`redirecting to ${prodURL}`);
+
+          //   let bustCache = true;
+          //   if (redirectHost === location.host) {
+          //     await fetch(prodURL, { cache: 'reload' });
+          //     bustCache = false;
+          //   }
+
+          //   sk.switchEnv('prod', newTab(evt), bustCache);
+          // } else {
+          //   const rateLimitedResults = results
+          //     .map((res) => getRateLimiter(res))
+          //     .filter((limiter) => !!limiter);
+          //   if (rateLimitedResults.length > 0) {
+          //     sk.showModal({
+          //       message: i18n(sk, `error_status_429_${rateLimitedResults[0]}`),
+          //       sticky: true,
+          //       level: 1,
+          //     });
+          //     return;
+          //   }
+          //   console.error(results);
+          //   sk.showModal({
+          //     message: i18n(sk, 'publish_failure'),
+          //     sticky: true,
+          //     level: 0,
+          //   });
+          // }
+        },
+        isEnabled: (sidekick) => sidekick.isAuthorized('live', 'write') && sidekick.status.edit
+          && sidekick.status.edit.url, // enable only if edit url exists
+      },
+    });
+  }
+
+  /**
    * Adds the unpublish plugin to the sidekick.
    * @private
    * @param {Sidekick} sk The sidekick
@@ -2621,6 +2681,22 @@ import sampleRUM from './rum.js';
     const { profile } = sk.status;
     if (profile) {
       const { name, email, picture } = profile;
+      fetch(`${window.location.origin}/en/users.json`)
+        .then((response) => response.json())
+        .then((data) => {
+          data?.data?.forEach((user) => {
+            if (user.email === email && user.admin === "true") {
+              addPublishPlugin(sk);
+              sk.remove('send-to-review');
+            } else if (user.email === email) {
+              addSendToReview(sk);
+              sk.remove('publish');
+            }
+          });
+        })
+        .catch((error) => {
+          console.error('Error fetching user details:', error);
+        });
       updateUserPicture(picture, name);
       sk.remove('user-login');
 
@@ -2688,6 +2764,8 @@ import sampleRUM from './rum.js';
         sk.remove('user-logout');
       }, { once: true });
     } else {
+      sk.remove('publish');
+      addSendToReview(sk);
       updateUserPicture();
       // login
       sk.add({
@@ -3342,7 +3420,7 @@ import sampleRUM from './rum.js';
         addPreviewPlugin(this);
         addReloadPlugin(this);
         addDeletePlugin(this);
-        addPublishPlugin(this);
+        // addPublishPlugin(this);
         addUnpublishPlugin(this);
         addBulkPlugins(this);
         addCustomPlugins(this);
