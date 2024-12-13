@@ -1627,10 +1627,11 @@ import sampleRUM from './rum.js';
       condition: (sidekick) => sidekick.isProject() && sk.isContent(),
       button: {
         text: i18n(sk, 'send-to-review'),
-        action: async (evt) => {
+        action: async () => {
           const email = sk.status.profile?.email;
           if (!email) {
-            alert('Please login to send the review request');
+            alert('Please login in sidekick to send the review request');
+            return;
           }
 
           const requestBody = {
@@ -1640,26 +1641,19 @@ import sampleRUM from './rum.js';
             },
             action: 'review_submit',
           };
+          const response = await fetch('http://localhost:3000/requests/submit', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody),
+          });
 
-          try {
-            const response = await fetch('http://localhost:3000/requests/submit', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(requestBody),
-            });
-
-            if (!response.ok) {
-              throw new Error('Network response was not ok');
-            }
-
-            const responseData = await response.json();
-            console.log('Response from server:', responseData);
+          if (response.ok) {
+            // const responseData = await response.json();
             alert('Review request sent successfully');
-            // Handle the response data as needed
-          } catch (error) {
-            console.error('Error making POST request:', error);
+          } else if (response.status === 500) {
+            alert('Already review request present for this page');
           }
         },
         isEnabled: (sidekick) => sidekick.isAuthorized('preview', 'write') && sidekick.status.edit
@@ -2677,7 +2671,7 @@ import sampleRUM from './rum.js';
         .then((response) => response.json())
         .then((data) => {
           data?.data?.forEach((user) => {
-            if (user.email === email && user.admin === "true") {
+            if (user.email === email && user.admin === 'true') {
               addPublishPlugin(sk);
               sk.remove('send-to-review');
             } else if (user.email === email) {
