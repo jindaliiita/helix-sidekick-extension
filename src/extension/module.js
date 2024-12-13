@@ -1628,49 +1628,41 @@ import sampleRUM from './rum.js';
       button: {
         text: i18n(sk, 'send-to-review'),
         action: async (evt) => {
-          // const { config, location } = sk;
-          // const path = location.pathname;
-          // sk.showWait();
-          // let urls = [path];
-          // // purge dependencies
-          // if (Array.isArray(window.hlx.dependencies)) {
-          //   urls = urls.concat(window.hlx.dependencies);
-          // }
-          // const results = await Promise.all(urls.map((url) => sk.publish(url)));
-          // if (results.every((res) => res && res.ok)) {
-          //   // fetch and redirect to production
-          //   const redirectHost = config.host || config.outerHost;
-          //   const prodURL = `https://${redirectHost}${path}`;
-          //   console.log(`redirecting to ${prodURL}`);
+          const email = sk.status.profile?.email;
+          if (!email) {
+            alert('Please login to send the review request');
+          }
 
-          //   let bustCache = true;
-          //   if (redirectHost === location.host) {
-          //     await fetch(prodURL, { cache: 'reload' });
-          //     bustCache = false;
-          //   }
+          const requestBody = {
+            requestData: {
+              previewUrl: sk?.status?.preview?.url,
+              createdBy: email,
+            },
+            action: 'review_submit',
+          };
 
-          //   sk.switchEnv('prod', newTab(evt), bustCache);
-          // } else {
-          //   const rateLimitedResults = results
-          //     .map((res) => getRateLimiter(res))
-          //     .filter((limiter) => !!limiter);
-          //   if (rateLimitedResults.length > 0) {
-          //     sk.showModal({
-          //       message: i18n(sk, `error_status_429_${rateLimitedResults[0]}`),
-          //       sticky: true,
-          //       level: 1,
-          //     });
-          //     return;
-          //   }
-          //   console.error(results);
-          //   sk.showModal({
-          //     message: i18n(sk, 'publish_failure'),
-          //     sticky: true,
-          //     level: 0,
-          //   });
-          // }
+          try {
+            const response = await fetch('http://localhost:3000/requests/submit', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(requestBody),
+            });
+
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+
+            const responseData = await response.json();
+            console.log('Response from server:', responseData);
+            alert('Review request sent successfully');
+            // Handle the response data as needed
+          } catch (error) {
+            console.error('Error making POST request:', error);
+          }
         },
-        isEnabled: (sidekick) => sidekick.isAuthorized('live', 'write') && sidekick.status.edit
+        isEnabled: (sidekick) => sidekick.isAuthorized('preview', 'write') && sidekick.status.edit
           && sidekick.status.edit.url, // enable only if edit url exists
       },
     });
