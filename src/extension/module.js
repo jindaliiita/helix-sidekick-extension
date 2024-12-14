@@ -2418,7 +2418,29 @@ import sampleRUM from './rum.js';
           } else {
             plugin.button = {
               text: (titleI18n && titleI18n[lang]) || title || '',
-              action: () => {
+              action: async () => {
+                // eslint-disable-next-line no-lonely-if
+                if (plugin.id === 'discussion') {
+                  const searchParams = new URLSearchParams({
+                    pageUrl: sk?.status?.preview?.url,
+                  });
+
+                  const getResponse = await fetch(`http://localhost:3000/requests/search?${searchParams.toString()}`, {
+                    method: 'GET',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                  });
+
+                  if (getResponse.ok) {
+                    const response = await getResponse.json();
+                    if (response.length === 0) {
+                      alert('No discussions found for this page');
+                      return;
+                    }
+                  }
+                }
+
                 if (url) {
                   const target = devMode ? new URL(url, devUrl) : new URL(url, `https://${innerHost}/`);
                   if (passConfig) {
