@@ -2423,6 +2423,7 @@ import sampleRUM from './rum.js';
                 if (plugin.id === 'discussion') {
                   const searchParams = new URLSearchParams({
                     pageUrl: sk?.status?.preview?.url,
+                    state: 'submitted_for_review',
                   });
 
                   const getResponse = await fetch(`http://localhost:3000/requests/search?${searchParams.toString()}`, {
