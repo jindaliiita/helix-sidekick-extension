@@ -1595,6 +1595,7 @@ import sampleRUM from './rum.js';
               requestData: {
                 requestId: reqId,
                 state: 'submitted_for_review',
+                previewUrl: sk?.status?.preview?.url,
               },
               action: 'approve',
             };
