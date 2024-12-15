@@ -275,6 +275,8 @@ import sampleRUM from './rum.js';
     prod: 'host',
   };
 
+  const TEMP_PORT = 4500;
+
   /**
    * Array of restricted paths with limited sidekick functionality.
    * @private
@@ -1579,7 +1581,7 @@ import sampleRUM from './rum.js';
             state: 'submitted_for_review',
           });
 
-          const getResponse = await fetch(`http://localhost:4500/requests/search?${searchParams.toString()}`, {
+          const getResponse = await fetch(`http://localhost:${TEMP_PORT}/requests/search?${searchParams.toString()}`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -1600,7 +1602,7 @@ import sampleRUM from './rum.js';
               action: 'approve',
             };
 
-            const submitResponse = await fetch('http://localhost:4500/requests/submit', {
+            const submitResponse = await fetch(`http://localhost:${TEMP_PORT}/requests/submit`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -1700,7 +1702,7 @@ import sampleRUM from './rum.js';
             },
             action: 'review_submit',
           };
-          const response = await fetch('http://localhost:4500/requests/submit', {
+          const response = await fetch(`http://localhost:${TEMP_PORT}/requests/submit`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -2485,7 +2487,7 @@ import sampleRUM from './rum.js';
                     state: 'submitted_for_review',
                   });
 
-                  const getResponse = await fetch(`http://localhost:4500/requests/search?${searchParams.toString()}`, {
+                  const getResponse = await fetch(`http://localhost:${TEMP_PORT}/requests/search?${searchParams.toString()}`, {
                     method: 'GET',
                     headers: {
                       'Content-Type': 'application/json',
