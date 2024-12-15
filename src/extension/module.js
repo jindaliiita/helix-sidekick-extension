@@ -1567,7 +1567,7 @@ import sampleRUM from './rum.js';
       condition: (sidekick) => sidekick.isProject() && sk.isContent(),
       button: {
         text: i18n(sk, 'publish'),
-        action: async () => {
+        action: async (evt) => {
           const email = sk.status.profile?.email;
           if (!email) {
             alert('Please login in sidekick to send the review request');
@@ -1609,7 +1609,20 @@ import sampleRUM from './rum.js';
             });
 
             if (submitResponse.ok) {
-              alert('Published successfully');
+              const { config, location } = sk;
+              const path = location.pathname;
+              const redirectHost = config.host || config.outerHost;
+              const prodURL = `https://${redirectHost}${path}`;
+              console.log(`redirecting to ${prodURL}`);
+
+              let bustCache = true;
+              if (redirectHost === location.host) {
+                await fetch(prodURL, { cache: 'reload' });
+                bustCache = false;
+              }
+              sk.switchEnv('prod', newTab(evt), bustCache);
+
+              // alert('Published successfully');
             } else {
               alert('Error while publishing');
             }
