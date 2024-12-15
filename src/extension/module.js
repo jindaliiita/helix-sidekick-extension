@@ -1567,48 +1567,93 @@ import sampleRUM from './rum.js';
       condition: (sidekick) => sidekick.isProject() && sk.isContent(),
       button: {
         text: i18n(sk, 'publish'),
-        action: async (evt) => {
-          const { config, location } = sk;
-          const path = location.pathname;
-          sk.showWait();
-          let urls = [path];
-          // purge dependencies
-          if (Array.isArray(window.hlx.dependencies)) {
-            urls = urls.concat(window.hlx.dependencies);
+        action: async () => {
+          const email = sk.status.profile?.email;
+          if (!email) {
+            alert('Please login in sidekick to send the review request');
+            return;
           }
-          const results = await Promise.all(urls.map((url) => sk.publish(url)));
-          if (results.every((res) => res && res.ok)) {
-            // fetch and redirect to production
-            const redirectHost = config.host || config.outerHost;
-            const prodURL = `https://${redirectHost}${path}`;
-            console.log(`redirecting to ${prodURL}`);
 
-            let bustCache = true;
-            if (redirectHost === location.host) {
-              await fetch(prodURL, { cache: 'reload' });
-              bustCache = false;
-            }
+          const searchParams = new URLSearchParams({
+            pageUrl: sk?.status?.preview?.url,
+            state: 'submitted_for_review',
+          });
 
-            sk.switchEnv('prod', newTab(evt), bustCache);
-          } else {
-            const rateLimitedResults = results
-              .map((res) => getRateLimiter(res))
-              .filter((limiter) => !!limiter);
-            if (rateLimitedResults.length > 0) {
-              sk.showModal({
-                message: i18n(sk, `error_status_429_${rateLimitedResults[0]}`),
-                sticky: true,
-                level: 1,
-              });
-              return;
-            }
-            console.error(results);
-            sk.showModal({
-              message: i18n(sk, 'publish_failure'),
-              sticky: true,
-              level: 0,
+          const getResponse = await fetch(`http://localhost:4500/requests/search?${searchParams.toString()}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (getResponse.ok) {
+            const response = await getResponse.json();
+            console.log(response);
+            const reqId = response[0].id;
+
+            const requestBody = {
+              requestData: {
+                requestId: reqId,
+                state: 'submitted_for_review',
+              },
+              action: 'approve',
+            };
+
+            const submitResponse = await fetch('http://localhost:4500/requests/submit', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(requestBody),
             });
+
+            if (submitResponse.ok) {
+              alert('Published successfully');
+            } else {
+              alert('Error while publishing');
+            }
           }
+          // const { config, location } = sk;
+          // const path = location.pathname;
+          // sk.showWait();
+          // let urls = [path];
+          // // purge dependencies
+          // if (Array.isArray(window.hlx.dependencies)) {
+          //   urls = urls.concat(window.hlx.dependencies);
+          // }
+          // const results = await Promise.all(urls.map((url) => sk.publish(url)));
+          // if (results.every((res) => res && res.ok)) {
+          //   // fetch and redirect to production
+          //   const redirectHost = config.host || config.outerHost;
+          //   const prodURL = `https://${redirectHost}${path}`;
+          //   console.log(`redirecting to ${prodURL}`);
+
+          //   let bustCache = true;
+          //   if (redirectHost === location.host) {
+          //     await fetch(prodURL, { cache: 'reload' });
+          //     bustCache = false;
+          //   }
+
+          //   sk.switchEnv('prod', newTab(evt), bustCache);
+          // } else {
+          //   const rateLimitedResults = results
+          //     .map((res) => getRateLimiter(res))
+          //     .filter((limiter) => !!limiter);
+          //   if (rateLimitedResults.length > 0) {
+          //     sk.showModal({
+          //       message: i18n(sk, `error_status_429_${rateLimitedResults[0]}`),
+          //       sticky: true,
+          //       level: 1,
+          //     });
+          //     return;
+          //   }
+          //   console.error(results);
+          //   sk.showModal({
+          //     message: i18n(sk, 'publish_failure'),
+          //     sticky: true,
+          //     level: 0,
+          //   });
+          // }
         },
         isEnabled: (sidekick) => sidekick.isAuthorized('live', 'write') && sidekick.status.edit
           && sidekick.status.edit.url, // enable only if edit url exists
@@ -1641,7 +1686,7 @@ import sampleRUM from './rum.js';
             },
             action: 'review_submit',
           };
-          const response = await fetch('http://localhost:3000/requests/submit', {
+          const response = await fetch('http://localhost:4500/requests/submit', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -2426,7 +2471,7 @@ import sampleRUM from './rum.js';
                     state: 'submitted_for_review',
                   });
 
-                  const getResponse = await fetch(`http://localhost:3000/requests/search?${searchParams.toString()}`, {
+                  const getResponse = await fetch(`http://localhost:4500/requests/search?${searchParams.toString()}`, {
                     method: 'GET',
                     headers: {
                       'Content-Type': 'application/json',
