@@ -1623,10 +1623,10 @@ import sampleRUM from './rum.js';
    */
   function addSendToReview(sk) {
     sk.add({
-      id: 'send-to-review',
+      id: 'send_to_review',
       condition: (sidekick) => sidekick.isProject() && sk.isContent(),
       button: {
-        text: i18n(sk, 'send-to-review'),
+        text: i18n(sk, 'send_to_review'),
         action: async () => {
           const email = sk.status.profile?.email;
           if (!email) {
@@ -2696,7 +2696,7 @@ import sampleRUM from './rum.js';
           data?.data?.forEach((user) => {
             if (user.email === email && user.admin === 'true') {
               addPublishPlugin(sk);
-              sk.remove('send-to-review');
+              sk.remove('send_to_review');
             } else if (user.email === email) {
               addSendToReview(sk);
               sk.remove('publish');
