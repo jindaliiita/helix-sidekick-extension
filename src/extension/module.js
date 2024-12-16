@@ -3484,6 +3484,11 @@ import sampleRUM from './rum.js';
             click: () => this.hide(),
           },
         });
+
+        const { pathname } = window.location;
+        if (pathname.includes('/dashboard')) {
+          return;
+        }
         // add default plugins
         addEditPlugin(this);
         addEnvPlugins(this);
